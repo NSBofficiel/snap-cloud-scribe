@@ -3,10 +3,11 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera as CameraIcon, Image } from "lucide-react";
+import { Camera as CameraIcon, Image, Upload } from "lucide-react";
 import Camera from "@/components/Camera";
 import PhotoGallery, { Photo } from "@/components/PhotoGallery";
 import { v4 as uuid } from "uuid";
+import FileUpload from "@/components/FileUpload";
 
 // Simulate cloud upload with local storage
 const simulateCloudUpload = async (photoData: string): Promise<boolean> => {
@@ -47,6 +48,37 @@ const Index = () => {
     
     setPhotos(prev => [newPhoto, ...prev]);
     setActiveTab("gallery");
+  };
+
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target && e.target.result) {
+        const photoData = e.target.result as string;
+        const newPhoto: Photo = {
+          id: uuid(),
+          imageData: photoData,
+          caption: file.name || "",
+          uploaded: false,
+        };
+        
+        setPhotos(prev => [newPhoto, ...prev]);
+        setActiveTab("gallery");
+        
+        toast({
+          title: "Photo uploaded",
+          description: "Your photo has been added to the gallery.",
+        });
+      }
+    };
+    reader.onerror = () => {
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your photo. Please try again.",
+        variant: "destructive",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUpdatePhoto = (id: string, caption: string) => {
@@ -143,6 +175,10 @@ const Index = () => {
         <TabsContent value="camera" className="mt-0">
           <div className="rounded-md overflow-hidden shadow-lg">
             <Camera onPhotoCapture={handlePhotoCapture} />
+          </div>
+          
+          <div className="my-6">
+            <FileUpload onFileUpload={handleFileUpload} />
           </div>
           
           <div className="mt-4 flex justify-center">
