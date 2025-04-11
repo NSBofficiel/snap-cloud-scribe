@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,17 +8,15 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { CameraIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const {
-    login
-  } = useAuth();
+  const { login } = useAuth();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -46,6 +45,17 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  const handleGuestLogin = () => {
+    // Skip authentication and navigate to the main page
+    localStorage.setItem("snapcloud_auth", "true");
+    toast({
+      title: "Welcome, Guest!",
+      description: "You are browsing as a guest user."
+    });
+    navigate("/");
+  };
+
   return <div className="container mx-auto max-w-md py-8 px-4 min-h-screen flex flex-col justify-center">
       <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center mb-4">
@@ -53,7 +63,7 @@ const Login = () => {
             <CameraIcon size={40} className="text-primary" />
           </div>
         </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">A.EYES </h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">A.EYES </h1>
         <p className="text-muted-foreground">Capture, store, remember.</p>
       </div>
 
@@ -79,7 +89,12 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Logging in..." : "Login"}
             </Button>
-            <Button type="button" variant="outline" className="w-full" onClick={() => navigate("/")}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleGuestLogin}
+            >
               Continue as Guest
             </Button>
           </CardFooter>
@@ -87,4 +102,5 @@ const Login = () => {
       </Card>
     </div>;
 };
+
 export default Login;
