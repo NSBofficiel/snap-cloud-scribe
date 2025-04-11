@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { CameraIcon } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,21 +14,28 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Simulate authentication delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const success = await login(email, password);
       
-      // For demo purposes, just navigate to home page with any credentials
-      toast({
-        title: "Login successful",
-        description: "Welcome to SnapCloud!",
-      });
-      navigate("/");
+      if (success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome to SnapCloud!",
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Login failed",
+          description: "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Login failed",
