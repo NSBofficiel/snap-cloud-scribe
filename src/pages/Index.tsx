@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera, Image } from "lucide-react";
+import { Camera as CameraIcon, Image } from "lucide-react";
 import Camera from "@/components/Camera";
 import PhotoGallery, { Photo } from "@/components/PhotoGallery";
 import { v4 as uuid } from "uuid";
@@ -126,7 +126,7 @@ const Index = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 mb-6">
           <TabsTrigger value="camera" className="flex items-center gap-2">
-            <Camera className="h-4 w-4" />
+            <CameraIcon className="h-4 w-4" />
             <span>Camera</span>
           </TabsTrigger>
           <TabsTrigger value="gallery" className="flex items-center gap-2">
@@ -173,7 +173,7 @@ const Index = () => {
               onClick={() => setActiveTab("camera")} 
               className="flex items-center gap-2"
             >
-              <Camera className="h-4 w-4" />
+              <CameraIcon className="h-4 w-4" />
               <span>Take a New Photo</span>
             </Button>
           </div>

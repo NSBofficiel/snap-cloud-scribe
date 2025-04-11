@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Camera as CameraIcon, FlipCamera, Loader2 } from "lucide-react";
+import { Camera as CameraIcon, RotateCw, Loader2 } from "lucide-react";
 
 interface CameraProps {
   onPhotoCapture: (photoData: string) => void;
@@ -103,7 +103,7 @@ const Camera: React.FC<CameraProps> = ({ onPhotoCapture }) => {
           className="rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30"
           onClick={toggleCamera}
         >
-          <FlipCamera className="h-5 w-5" />
+          <RotateCw className="h-5 w-5" />
         </Button>
         
         <Button 
