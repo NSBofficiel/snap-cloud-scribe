@@ -32,6 +32,7 @@ const Login = () => {
             description: "Please make sure your passwords match",
             variant: "destructive",
           });
+          setIsLoading(false);
           return;
         }
         
@@ -77,11 +78,32 @@ const Login = () => {
     }
   };
 
-  const handleGuestAccess = () => {
-    // Set guest authentication in localStorage
-    localStorage.setItem("snapcloud_auth", "guest");
-    localStorage.setItem("snapcloud_username", "Guest");
-    navigate("/");
+  const handleGuestAccess = async () => {
+    setIsLoading(true);
+    try {
+      // Set guest authentication in localStorage
+      localStorage.setItem("snapcloud_auth", "guest");
+      localStorage.setItem("snapcloud_username", "Guest");
+      
+      // Use the auth context to update the authentication state
+      // This ensures the auth context state is properly updated
+      await login("guest@example.com", "guest");
+      
+      toast({
+        title: "Guest access granted",
+        description: "Welcome to SnapCloud as a guest user!",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Guest access failed",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -161,14 +183,16 @@ const Login = () => {
                 variant="outline"
                 className="flex-1"
                 onClick={handleGuestAccess}
+                disabled={isLoading}
               >
-                Continue as Guest
+                {isLoading ? "Processing..." : "Continue as Guest"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1"
                 onClick={() => setIsSignUp(!isSignUp)}
+                disabled={isLoading}
               >
                 {isSignUp ? (
                   "Back to Login"

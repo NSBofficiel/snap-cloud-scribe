@@ -20,11 +20,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     checkAuthStatus();
+    
+    // Listen for storage events to handle multi-tab scenarios
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "snapcloud_auth") {
+        checkAuthStatus();
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // This is a simple mock implementation
-    // In a real app, you would validate against a backend
+    // Handle guest login case specifically
+    if (email === "guest@example.com" && password === "guest") {
+      localStorage.setItem("snapcloud_auth", "guest");
+      localStorage.setItem("snapcloud_username", "Guest");
+      setIsAuthenticated(true);
+      return true;
+    }
+    
+    // Regular login logic
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
