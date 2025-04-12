@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera as CameraIcon, Image, Upload } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Camera as CameraIcon, Image, Upload, User } from "lucide-react";
 import Camera from "@/components/Camera";
 import PhotoGallery, { Photo } from "@/components/PhotoGallery";
 import { v4 as uuid } from "uuid";
 import FileUpload from "@/components/FileUpload";
+import { Link } from "react-router-dom";
 
 // Simulate cloud upload with local storage
 const simulateCloudUpload = async (photoData: string): Promise<boolean> => {
@@ -20,6 +21,19 @@ const Index = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [activeTab, setActiveTab] = useState("camera");
   const { toast } = useToast();
+
+  // Get user info from localStorage if available
+  const getUserInfo = () => {
+    const isGuest = localStorage.getItem("snapcloud_auth") === "guest";
+    const username = localStorage.getItem("snapcloud_username") || (isGuest ? "Guest" : "User");
+    return { 
+      username, 
+      isGuest,
+      photoUrl: localStorage.getItem("snapcloud_photo") || undefined
+    };
+  };
+
+  const userInfo = getUserInfo();
 
   // Load photos from localStorage on component mount
   useEffect(() => {
@@ -98,11 +112,9 @@ const Index = () => {
   };
 
   const handleUploadPhoto = async (id: string) => {
-    // Find the photo to upload
     const photoToUpload = photos.find(photo => photo.id === id);
     if (!photoToUpload) return;
 
-    // Set loading state for this photo
     setPhotos(prev => 
       prev.map(photo => 
         photo.id === id ? { ...photo, uploading: true } : photo
@@ -115,7 +127,6 @@ const Index = () => {
     });
 
     try {
-      // Simulate cloud upload
       const success = await simulateCloudUpload(photoToUpload.imageData);
       
       if (success) {
@@ -148,11 +159,30 @@ const Index = () => {
 
   return (
     <div className="container mx-auto max-w-3xl py-8 px-4">
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-          SnapCloud
-        </h1>
-        <p className="text-muted-foreground">Capture, store, remember.</p>
+      <header className="mb-8 flex justify-between items-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            SnapCloud
+          </h1>
+          <p className="text-muted-foreground">Capture, store, remember.</p>
+        </div>
+        
+        <Link to="/account">
+          <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+            <div>
+              <p className="text-sm font-medium text-right">{userInfo.username}</p>
+              {userInfo.isGuest && (
+                <p className="text-xs text-muted-foreground text-right">Guest Account</p>
+              )}
+            </div>
+            <Avatar>
+              <AvatarImage src={userInfo.photoUrl} />
+              <AvatarFallback>
+                <User size={16} />
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </Link>
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

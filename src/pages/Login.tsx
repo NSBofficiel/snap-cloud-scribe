@@ -80,6 +80,7 @@ const Login = () => {
   const handleGuestAccess = () => {
     // Set guest authentication in localStorage
     localStorage.setItem("snapcloud_auth", "guest");
+    localStorage.setItem("snapcloud_username", "Guest");
     navigate("/");
   };
 

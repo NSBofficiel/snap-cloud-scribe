@@ -16,7 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuthStatus = () => {
       const authStatus = localStorage.getItem("snapcloud_auth");
-      setIsAuthenticated(authStatus === "true");
+      setIsAuthenticated(authStatus === "true" || authStatus === "guest");
     };
     
     checkAuthStatus();
@@ -32,6 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For demo, we're accepting any non-empty credentials
       if (email && password) {
         localStorage.setItem("snapcloud_auth", "true");
+        // Save a default username from the email
+        localStorage.setItem("snapcloud_username", email.split("@")[0]);
         setIsAuthenticated(true);
         return true;
       }
@@ -44,6 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem("snapcloud_auth");
+    localStorage.removeItem("snapcloud_username");
+    localStorage.removeItem("snapcloud_photo");
     setIsAuthenticated(false);
   };
 
