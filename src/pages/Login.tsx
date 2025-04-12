@@ -6,38 +6,81 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { CameraIcon } from "lucide-react";
+import { CameraIcon, UserPlus } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Simulate authentication delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // For demo purposes, just navigate to home page with any credentials
-      toast({
-        title: "Login successful",
-        description: "Welcome to SnapCloud!",
-      });
-      navigate("/");
+      if (isSignUp) {
+        // Validate passwords match
+        if (password !== confirmPassword) {
+          toast({
+            title: "Passwords don't match",
+            description: "Please make sure your passwords match",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Simulate account creation delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        
+        // For demo purposes
+        toast({
+          title: "Account created successfully",
+          description: "Welcome to SnapCloud!",
+        });
+        
+        // After successful signup, log them in
+        const success = await login(email, password);
+        if (success) {
+          navigate("/");
+        }
+      } else {
+        // Regular login
+        const success = await login(email, password);
+        if (success) {
+          toast({
+            title: "Login successful",
+            description: "Welcome to SnapCloud!",
+          });
+          navigate("/");
+        } else {
+          toast({
+            title: "Login failed",
+            description: "Please check your credentials and try again.",
+            variant: "destructive",
+          });
+        }
+      }
     } catch (error) {
       toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
+        title: isSignUp ? "Sign up failed" : "Login failed",
+        description: "An error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGuestAccess = () => {
+    // Set guest authentication in localStorage
+    localStorage.setItem("snapcloud_auth", "guest");
+    navigate("/");
   };
 
   return (
@@ -56,12 +99,14 @@ const Login = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Login</CardTitle>
+          <CardTitle>{isSignUp ? "Create Account" : "Login"}</CardTitle>
           <CardDescription>
-            Enter your credentials to access your photos
+            {isSignUp 
+              ? "Create an account to start storing your photos" 
+              : "Enter your credentials to access your photos"}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -85,6 +130,19 @@ const Login = () => {
                 required
               />
             </div>
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
             <Button
@@ -92,16 +150,35 @@ const Login = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading 
+                ? (isSignUp ? "Creating Account..." : "Logging in...") 
+                : (isSignUp ? "Create Account" : "Login")}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => navigate("/")}
-            >
-              Continue as Guest
-            </Button>
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleGuestAccess}
+              >
+                Continue as Guest
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsSignUp(!isSignUp)}
+              >
+                {isSignUp ? (
+                  "Back to Login"
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Sign Up
+                  </>
+                )}
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>
