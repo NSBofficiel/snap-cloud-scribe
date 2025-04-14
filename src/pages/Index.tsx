@@ -10,17 +10,19 @@ import PhotoGallery from "@/components/PhotoGallery";
 import FileUpload from "@/components/FileUpload";
 import { Link } from "react-router-dom";
 import { photoService } from "@/integrations/supabase/photos";
+import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("camera");
   const { toast } = useToast();
+  const { isGuest } = useAuth();
 
   const getUserInfo = () => {
-    const isGuest = localStorage.getItem("snapcloud_auth") === "guest";
-    const username = localStorage.getItem("snapcloud_username") || (isGuest ? "Guest" : "User");
+    const isGuestUser = isGuest;
+    const username = localStorage.getItem("snapcloud_username") || (isGuestUser ? "Guest" : "User");
     return { 
       username, 
-      isGuest,
+      isGuest: isGuestUser,
       photoUrl: localStorage.getItem("snapcloud_photo") || undefined
     };
   };
@@ -29,10 +31,13 @@ const Index = () => {
 
   const handlePhotoCapture = async (photoData: string) => {
     try {
+      // Set visibility based on user type - guest photos are public by default
+      const visibility = isGuest ? "public" : "private";
+      
       const newPhoto = await photoService.uploadPhoto({
         image_data: photoData,
         caption: "",
-        visibility: "private"
+        visibility: visibility as 'public' | 'private'
       });
       
       if (newPhoto) {
@@ -58,10 +63,13 @@ const Index = () => {
         const photoData = e.target.result as string;
         
         try {
+          // Set visibility based on user type - guest photos are public by default
+          const visibility = isGuest ? "public" : "private";
+          
           const newPhoto = await photoService.uploadPhoto({
             image_data: photoData,
             caption: file.name || "",
-            visibility: "private"
+            visibility: visibility as 'public' | 'private'
           });
           
           if (newPhoto) {

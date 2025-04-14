@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { CameraIcon, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -36,27 +38,42 @@ const Login = () => {
           return;
         }
         
-        // Simulate account creation delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        // For demo purposes
-        toast({
-          title: "Account created successfully",
-          description: "Welcome to SnapCloud!",
+        // Create account with Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username: username || email.split("@")[0],
+            },
+          },
         });
         
-        // After successful signup, log them in
-        const success = await login(email, password);
-        if (success) {
-          navigate("/");
+        if (error) {
+          toast({
+            title: "Sign up failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
         }
+        
+        toast({
+          title: "Account created successfully",
+          description: "You may now log in with your credentials.",
+        });
+        
+        // Switch to login view after successful signup
+        setIsSignUp(false);
+        setIsLoading(false);
       } else {
         // Regular login
         const success = await login(email, password);
         if (success) {
           toast({
             title: "Login successful",
-            description: "Welcome to SnapCloud!",
+            description: "Welcome to A.Eye!",
           });
           navigate("/");
         } else {
@@ -81,20 +98,21 @@ const Login = () => {
   const handleGuestAccess = async () => {
     setIsLoading(true);
     try {
-      // Set guest authentication in localStorage
-      localStorage.setItem("snapcloud_auth", "guest");
-      localStorage.setItem("snapcloud_username", "Guest");
+      const success = await login("guest@example.com", "guest");
       
-      // Use the auth context to update the authentication state
-      // This ensures the auth context state is properly updated
-      await login("guest@example.com", "guest");
-      
-      toast({
-        title: "Guest access granted",
-        description: "Welcome to SnapCloud as a guest user!",
-      });
-      
-      navigate("/");
+      if (success) {
+        toast({
+          title: "Guest access granted",
+          description: "Welcome to A.Eye as a guest user!",
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Guest access failed",
+          description: "An error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Guest access failed",
@@ -142,6 +160,20 @@ const Login = () => {
                 required
               />
             </div>
+            
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="username">Username (optional)</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Your preferred username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
