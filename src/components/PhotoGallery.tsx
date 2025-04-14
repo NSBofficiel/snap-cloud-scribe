@@ -5,20 +5,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ImageIcon } from "lucide-react";
 import { photoService } from "@/integrations/supabase/photos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-export interface Photo {
-  id?: string;
-  imageData: string;
-  caption: string;
-  visibility: 'private' | 'public';
-}
+import type { Photo } from "@/integrations/supabase/photos";
 
 interface PhotoGalleryProps {
   onUpdatePhoto?: (id: string, caption: string) => void;
   onDeletePhoto?: (id: string) => void;
+  onUploadPhoto?: (id: string) => Promise<void>;
 }
 
-const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
+const PhotoGallery: React.FC<PhotoGalleryProps> = ({ 
+  onUpdatePhoto, 
+  onDeletePhoto, 
+  onUploadPhoto 
+}) => {
   const [myPhotos, setMyPhotos] = useState<Photo[]>([]);
   const [sharedPhotos, setSharedPhotos] = useState<Photo[]>([]);
   const [activeTab, setActiveTab] = useState<'my-photos' | 'shared-photos'>('my-photos');
@@ -69,11 +68,11 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = () => {
           {photos.map((photo) => (
             <div key={photo.id} className="fade-in">
               <PhotoCard
-                id={photo.id || ''}
-                imageData={photo.imageData}
+                id={photo.id}
+                imageData={photo.image_data}
                 caption={photo.caption}
                 visibility={photo.visibility}
-                onToggleVisibility={() => handleToggleVisibility(photo.id!, photo.visibility)}
+                onToggleVisibility={() => handleToggleVisibility(photo.id, photo.visibility)}
               />
             </div>
           ))}

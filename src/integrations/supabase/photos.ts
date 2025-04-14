@@ -1,17 +1,12 @@
 
 import { supabase } from "./client";
-import { v4 as uuid } from "uuid";
+import type { Tables, TablesInsert } from "./types";
 
-export interface Photo {
-  id?: string;
-  user_id?: string;
-  imageData: string;
-  caption: string;
-  visibility: 'private' | 'public';
-}
+export type Photo = Tables<'photos'>;
+export type PhotoInsert = TablesInsert<'photos'>;
 
 export const photoService = {
-  async uploadPhoto(photo: Omit<Photo, 'id' | 'user_id'>): Promise<Photo | null> {
+  async uploadPhoto(photo: Omit<PhotoInsert, 'id' | 'user_id' | 'created_at'>): Promise<Photo | null> {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) return null;
@@ -20,7 +15,7 @@ export const photoService = {
       .from('photos')
       .insert({
         user_id: user.id,
-        image_data: photo.imageData,
+        image_data: photo.image_data,
         caption: photo.caption,
         visibility: photo.visibility
       })
@@ -50,7 +45,7 @@ export const photoService = {
       return [];
     }
 
-    return data;
+    return data || [];
   },
 
   async getSharedPhotos(): Promise<Photo[]> {
@@ -64,7 +59,7 @@ export const photoService = {
       return [];
     }
 
-    return data;
+    return data || [];
   },
 
   async updatePhotoVisibility(photoId: string, visibility: 'private' | 'public'): Promise<Photo | null> {

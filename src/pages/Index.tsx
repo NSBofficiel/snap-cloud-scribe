@@ -5,10 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera as CameraIcon, Image, Upload, User } from "lucide-react";
 import Camera from "@/components/Camera";
-import PhotoGallery, { Photo } from "@/components/PhotoGallery";
+import PhotoGallery from "@/components/PhotoGallery";
 import { v4 as uuid } from "uuid";
 import FileUpload from "@/components/FileUpload";
 import { Link } from "react-router-dom";
+import { photoService } from "@/integrations/supabase/photos";
+import type { Photo } from "@/integrations/supabase/photos";
 
 const simulateCloudUpload = async (photoData: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -33,64 +35,77 @@ const Index = () => {
   const userInfo = getUserInfo();
 
   useEffect(() => {
-    const savedPhotos = localStorage.getItem("cloudPhotos");
-    if (savedPhotos) {
-      try {
-        setPhotos(JSON.parse(savedPhotos));
-      } catch (error) {
-        console.error("Error loading saved photos:", error);
-      }
-    }
+    const fetchPhotos = async () => {
+      const myPhotos = await photoService.getMyPhotos();
+      setPhotos(myPhotos);
+    };
+
+    fetchPhotos();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("cloudPhotos", JSON.stringify(photos));
-  }, [photos]);
-
-  const handlePhotoCapture = (photoData: string) => {
-    const newPhoto: Photo = {
-      id: uuid(),
-      imageData: photoData,
-      caption: "",
-      uploaded: false,
-    };
-    
-    setPhotos(prev => [newPhoto, ...prev]);
-    setActiveTab("gallery");
-  };
-
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target && e.target.result) {
-        const photoData = e.target.result as string;
-        const newPhoto: Photo = {
-          id: uuid(),
-          imageData: photoData,
-          caption: file.name || "",
-          uploaded: false,
-        };
-        
+  const handlePhotoCapture = async (photoData: string) => {
+    try {
+      const newPhoto = await photoService.uploadPhoto({
+        image_data: photoData,
+        caption: "",
+        visibility: "private"
+      });
+      
+      if (newPhoto) {
         setPhotos(prev => [newPhoto, ...prev]);
         setActiveTab("gallery");
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your photo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      if (e.target && e.target.result) {
+        const photoData = e.target.result as string;
         
-        toast({
-          title: "Photo uploaded",
-          description: "Your photo has been added to the gallery.",
-        });
+        try {
+          const newPhoto = await photoService.uploadPhoto({
+            image_data: photoData,
+            caption: file.name || "",
+            visibility: "private"
+          });
+          
+          if (newPhoto) {
+            setPhotos(prev => [newPhoto, ...prev]);
+            setActiveTab("gallery");
+            
+            toast({
+              title: "Photo uploaded",
+              description: "Your photo has been added to the gallery.",
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Upload failed",
+            description: "There was an error uploading your photo.",
+            variant: "destructive",
+          });
+        }
       }
     };
     reader.onerror = () => {
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your photo. Please try again.",
+        description: "There was an error reading the file.",
         variant: "destructive",
       });
     };
     reader.readAsDataURL(file);
   };
 
-  const handleUpdatePhoto = (id: string, caption: string) => {
+  const handleUpdatePhoto = async (id: string, caption: string) => {
     setPhotos(prev => 
       prev.map(photo => 
         photo.id === id ? { ...photo, caption } : photo
@@ -98,7 +113,7 @@ const Index = () => {
     );
   };
 
-  const handleDeletePhoto = (id: string) => {
+  const handleDeletePhoto = async (id: string) => {
     setPhotos(prev => prev.filter(photo => photo.id !== id));
     toast({
       title: "Photo deleted",
@@ -107,49 +122,10 @@ const Index = () => {
   };
 
   const handleUploadPhoto = async (id: string) => {
-    const photoToUpload = photos.find(photo => photo.id === id);
-    if (!photoToUpload) return;
-
-    setPhotos(prev => 
-      prev.map(photo => 
-        photo.id === id ? { ...photo, uploading: true } : photo
-      )
-    );
-    
     toast({
-      title: "Uploading photo...",
-      description: "Your photo is being uploaded to the cloud.",
+      title: "Upload complete",
+      description: "Your photo has been saved to the cloud.",
     });
-
-    try {
-      const success = await simulateCloudUpload(photoToUpload.imageData);
-      
-      if (success) {
-        setPhotos(prev => 
-          prev.map(photo => 
-            photo.id === id ? { ...photo, uploaded: true, uploading: false } : photo
-          )
-        );
-        
-        toast({
-          title: "Upload complete",
-          description: "Your photo has been successfully saved to the cloud.",
-        });
-      }
-    } catch (error) {
-      console.error("Error uploading photo:", error);
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your photo. Please try again.",
-        variant: "destructive",
-      });
-      
-      setPhotos(prev => 
-        prev.map(photo => 
-          photo.id === id ? { ...photo, uploading: false } : photo
-        )
-      );
-    }
   };
 
   return (
@@ -222,7 +198,6 @@ const Index = () => {
         <TabsContent value="gallery" className="mt-0">
           <div className="min-h-[400px]">
             <PhotoGallery 
-              photos={photos}
               onUpdatePhoto={handleUpdatePhoto}
               onDeletePhoto={handleDeletePhoto}
               onUploadPhoto={handleUploadPhoto}
