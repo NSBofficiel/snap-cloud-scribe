@@ -32,6 +32,7 @@ const Camera: React.FC<CameraProps> = ({ onPhotoCapture }) => {
         
         if (videoRef.current) {
           videoRef.current.srcObject = newStream;
+          videoRef.current.play().catch(err => console.error("Error playing video:", err));
         }
       } catch (error) {
         console.error("Error accessing camera:", error);
@@ -92,7 +93,8 @@ const Camera: React.FC<CameraProps> = ({ onPhotoCapture }) => {
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover z-10"
+          style={{ objectFit: 'cover', display: 'block' }}
         />
       )}
       

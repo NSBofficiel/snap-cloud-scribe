@@ -115,7 +115,7 @@ const Login = () => {
           </div>
         </div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-          SnapCloud
+          A.Eye
         </h1>
         <p className="text-muted-foreground">Capture, store, remember.</p>
       </div>

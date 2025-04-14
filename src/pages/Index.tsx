@@ -10,9 +10,7 @@ import { v4 as uuid } from "uuid";
 import FileUpload from "@/components/FileUpload";
 import { Link } from "react-router-dom";
 
-// Simulate cloud upload with local storage
 const simulateCloudUpload = async (photoData: string): Promise<boolean> => {
-  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   return true;
 };
@@ -22,7 +20,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("camera");
   const { toast } = useToast();
 
-  // Get user info from localStorage if available
   const getUserInfo = () => {
     const isGuest = localStorage.getItem("snapcloud_auth") === "guest";
     const username = localStorage.getItem("snapcloud_username") || (isGuest ? "Guest" : "User");
@@ -35,7 +32,6 @@ const Index = () => {
 
   const userInfo = getUserInfo();
 
-  // Load photos from localStorage on component mount
   useEffect(() => {
     const savedPhotos = localStorage.getItem("cloudPhotos");
     if (savedPhotos) {
@@ -47,7 +43,6 @@ const Index = () => {
     }
   }, []);
 
-  // Save photos to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("cloudPhotos", JSON.stringify(photos));
   }, [photos]);
@@ -162,7 +157,7 @@ const Index = () => {
       <header className="mb-8 flex justify-between items-center">
         <div className="text-center">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            SnapCloud
+            A.Eye
           </h1>
           <p className="text-muted-foreground">Capture, store, remember.</p>
         </div>
