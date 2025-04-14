@@ -3,40 +3,34 @@ import React, { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Save, Trash2, Cloud, CloudOff } from "lucide-react";
+import { Pencil, Save, Trash2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PhotoCardProps {
   id: string;
   imageData: string;
   caption: string;
-  uploaded: boolean;
-  onUpdate: (id: string, caption: string) => void;
-  onDelete: (id: string) => void;
-  onUpload: (id: string) => void;
+  visibility: 'private' | 'public';
+  onToggleVisibility?: () => void;
 }
 
 const PhotoCard: React.FC<PhotoCardProps> = ({
   id,
   imageData,
   caption,
-  uploaded,
-  onUpdate,
-  onDelete,
-  onUpload,
+  visibility,
+  onToggleVisibility,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newCaption, setNewCaption] = useState(caption);
 
   const handleSave = () => {
-    onUpdate(id, newCaption);
+    // Implement save logic if needed
     setIsEditing(false);
   };
 
   return (
-    <Card className={cn("photo-card overflow-hidden h-full", 
-      !uploaded && "border-dashed border-muted-foreground/50"
-    )}>
+    <Card className="photo-card overflow-hidden h-full">
       <CardContent className="p-0">
         <img
           src={imageData}
@@ -75,20 +69,21 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
             variant="outline"
             className={cn(
               "flex items-center gap-1",
-              uploaded ? "text-green-500" : "text-muted-foreground"
+              visibility === 'public' 
+                ? "text-green-500 hover:bg-green-50" 
+                : "text-muted-foreground hover:bg-gray-50"
             )}
-            onClick={() => !uploaded && onUpload(id)}
-            disabled={uploaded}
+            onClick={onToggleVisibility}
           >
-            {uploaded ? (
+            {visibility === 'public' ? (
               <>
-                <Cloud className="h-4 w-4" />
-                <span className="text-xs">Saved</span>
+                <Eye className="h-4 w-4" />
+                <span className="text-xs">Public</span>
               </>
             ) : (
               <>
-                <CloudOff className="h-4 w-4" />
-                <span className="text-xs">Upload</span>
+                <EyeOff className="h-4 w-4" />
+                <span className="text-xs">Private</span>
               </>
             )}
           </Button>
@@ -96,7 +91,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
             size="sm"
             variant="destructive"
             className="flex items-center gap-1"
-            onClick={() => onDelete(id)}
+            // Implement delete logic
           >
             <Trash2 className="h-4 w-4" />
             <span className="text-xs">Delete</span>
