@@ -17,7 +17,7 @@ export const photoService = {
         user_id: user.id,
         image_data: photo.image_data,
         caption: photo.caption,
-        visibility: photo.visibility
+        visibility: photo.visibility as 'public' | 'private'
       })
       .select()
       .single();

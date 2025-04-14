@@ -34,8 +34,8 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     fetchPhotos();
   }, []);
 
-  const handleToggleVisibility = async (photoId: string, currentVisibility: 'private' | 'public') => {
-    const newVisibility = currentVisibility === 'private' ? 'public' : 'private';
+  const handleToggleVisibility = async (photoId: string, currentVisibility: 'public' | 'private') => {
+    const newVisibility = currentVisibility === 'private' ? 'public' : 'private' as 'public' | 'private';
     const updatedPhoto = await photoService.updatePhotoVisibility(photoId, newVisibility);
     
     if (updatedPhoto) {
@@ -71,8 +71,8 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                 id={photo.id}
                 imageData={photo.image_data}
                 caption={photo.caption}
-                visibility={photo.visibility}
-                onToggleVisibility={() => handleToggleVisibility(photo.id, photo.visibility)}
+                visibility={photo.visibility as 'public' | 'private'}
+                onToggleVisibility={() => handleToggleVisibility(photo.id, photo.visibility as 'public' | 'private')}
               />
             </div>
           ))}
