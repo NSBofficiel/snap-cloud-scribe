@@ -38,7 +38,8 @@ export const photoService = {
     const { data, error } = await supabase
       .from('photos')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching photos:', error);
@@ -52,7 +53,8 @@ export const photoService = {
     const { data, error } = await supabase
       .from('photos')
       .select('*')
-      .eq('visibility', 'public');
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching shared photos:', error);
@@ -81,5 +83,24 @@ export const photoService = {
     }
 
     return data;
+  },
+  
+  async deletePhoto(photoId: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('photos')
+      .delete()
+      .eq('id', photoId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting photo:', error);
+      return false;
+    }
+
+    return true;
   }
 };

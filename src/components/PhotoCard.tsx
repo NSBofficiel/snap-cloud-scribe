@@ -12,6 +12,7 @@ interface PhotoCardProps {
   caption: string;
   visibility: 'private' | 'public';
   onToggleVisibility?: () => void;
+  onDelete?: () => void;
 }
 
 const PhotoCard: React.FC<PhotoCardProps> = ({
@@ -20,6 +21,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
   caption,
   visibility,
   onToggleVisibility,
+  onDelete,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newCaption, setNewCaption] = useState(caption);
@@ -91,7 +93,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
             size="sm"
             variant="destructive"
             className="flex items-center gap-1"
-            // Implement delete logic
+            onClick={onDelete}
           >
             <Trash2 className="h-4 w-4" />
             <span className="text-xs">Delete</span>

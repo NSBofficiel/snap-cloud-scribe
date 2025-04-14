@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from "react";
 import PhotoCard from "./PhotoCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, RefreshCw } from "lucide-react";
 import { photoService } from "@/integrations/supabase/photos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Photo } from "@/integrations/supabase/photos";
+import { Button } from "./ui/button";
 
 interface PhotoGalleryProps {
   onUpdatePhoto?: (id: string, caption: string) => void;
@@ -21,16 +22,27 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [myPhotos, setMyPhotos] = useState<Photo[]>([]);
   const [sharedPhotos, setSharedPhotos] = useState<Photo[]>([]);
   const [activeTab, setActiveTab] = useState<'my-photos' | 'shared-photos'>('my-photos');
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
+  const fetchPhotos = async () => {
+    setIsLoading(true);
+    try {
       const myPhotosList = await photoService.getMyPhotos();
       const sharedPhotosList = await photoService.getSharedPhotos();
       
+      console.log("My photos:", myPhotosList);
+      console.log("Shared photos:", sharedPhotosList);
+      
       setMyPhotos(myPhotosList);
       setSharedPhotos(sharedPhotosList);
-    };
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPhotos();
   }, []);
 
@@ -44,10 +56,35 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           photo.id === photoId ? { ...photo, visibility: newVisibility } : photo
         )
       );
+      
+      // Refresh shared photos if we're making a photo public/private
+      if (activeTab === 'shared-photos' || newVisibility === 'public') {
+        const sharedPhotosList = await photoService.getSharedPhotos();
+        setSharedPhotos(sharedPhotosList);
+      }
     }
   };
 
+  const handleDelete = async (photoId: string) => {
+    if (onDeletePhoto) {
+      onDeletePhoto(photoId);
+    }
+    
+    // Remove from local state
+    setMyPhotos(prev => prev.filter(photo => photo.id !== photoId));
+    setSharedPhotos(prev => prev.filter(photo => photo.id !== photoId));
+  };
+
   const renderPhotoGrid = (photos: Photo[]) => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8 h-64">
+          <RefreshCw className="h-8 w-8 text-primary animate-spin mb-2" />
+          <p className="text-sm text-muted-foreground">Loading photos...</p>
+        </div>
+      );
+    }
+
     if (photos.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center p-8 h-64 border border-dashed rounded-md">
@@ -64,7 +101,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
     return (
       <ScrollArea className="h-full w-full pr-4">
-        <div className="gallery-grid w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {photos.map((photo) => (
             <div key={photo.id} className="fade-in">
               <PhotoCard
@@ -73,6 +110,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                 caption={photo.caption}
                 visibility={photo.visibility as 'public' | 'private'}
                 onToggleVisibility={() => handleToggleVisibility(photo.id, photo.visibility as 'public' | 'private')}
+                onDelete={() => handleDelete(photo.id)}
               />
             </div>
           ))}
@@ -82,20 +120,34 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={(tab) => setActiveTab(tab as 'my-photos' | 'shared-photos')}>
-      <TabsList className="grid grid-cols-2 mb-6">
-        <TabsTrigger value="my-photos">My Photos</TabsTrigger>
-        <TabsTrigger value="shared-photos">Shared Photos</TabsTrigger>
-      </TabsList>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Tabs value={activeTab} onValueChange={(tab) => setActiveTab(tab as 'my-photos' | 'shared-photos')} className="w-full">
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="my-photos">My Photos</TabsTrigger>
+            <TabsTrigger value="shared-photos">Shared Photos</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="ml-2"
+          onClick={fetchPhotos}
+        >
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Refresh
+        </Button>
+      </div>
       
-      <TabsContent value="my-photos">
+      <TabsContent value="my-photos" className="mt-2">
         {renderPhotoGrid(myPhotos)}
       </TabsContent>
       
-      <TabsContent value="shared-photos">
+      <TabsContent value="shared-photos" className="mt-2">
         {renderPhotoGrid(sharedPhotos)}
       </TabsContent>
-    </Tabs>
+    </div>
   );
 };
 

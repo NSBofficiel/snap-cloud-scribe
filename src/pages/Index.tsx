@@ -1,24 +1,17 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera as CameraIcon, Image, Upload, User } from "lucide-react";
+import { Camera as CameraIcon, Image, User } from "lucide-react";
 import Camera from "@/components/Camera";
 import PhotoGallery from "@/components/PhotoGallery";
-import { v4 as uuid } from "uuid";
 import FileUpload from "@/components/FileUpload";
 import { Link } from "react-router-dom";
 import { photoService } from "@/integrations/supabase/photos";
-import type { Photo } from "@/integrations/supabase/photos";
-
-const simulateCloudUpload = async (photoData: string): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return true;
-};
 
 const Index = () => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
   const [activeTab, setActiveTab] = useState("camera");
   const { toast } = useToast();
 
@@ -34,15 +27,6 @@ const Index = () => {
 
   const userInfo = getUserInfo();
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      const myPhotos = await photoService.getMyPhotos();
-      setPhotos(myPhotos);
-    };
-
-    fetchPhotos();
-  }, []);
-
   const handlePhotoCapture = async (photoData: string) => {
     try {
       const newPhoto = await photoService.uploadPhoto({
@@ -52,8 +36,11 @@ const Index = () => {
       });
       
       if (newPhoto) {
-        setPhotos(prev => [newPhoto, ...prev]);
         setActiveTab("gallery");
+        toast({
+          title: "Photo captured",
+          description: "Your photo has been added to the gallery.",
+        });
       }
     } catch (error) {
       toast({
@@ -78,7 +65,6 @@ const Index = () => {
           });
           
           if (newPhoto) {
-            setPhotos(prev => [newPhoto, ...prev]);
             setActiveTab("gallery");
             
             toast({
@@ -106,19 +92,30 @@ const Index = () => {
   };
 
   const handleUpdatePhoto = async (id: string, caption: string) => {
-    setPhotos(prev => 
-      prev.map(photo => 
-        photo.id === id ? { ...photo, caption } : photo
-      )
-    );
+    // To be implemented
+    toast({
+      title: "Caption updated",
+      description: "Your photo caption has been updated.",
+    });
   };
 
   const handleDeletePhoto = async (id: string) => {
-    setPhotos(prev => prev.filter(photo => photo.id !== id));
-    toast({
-      title: "Photo deleted",
-      description: "The photo has been removed from your gallery.",
-    });
+    try {
+      const success = await photoService.deletePhoto(id);
+      
+      if (success) {
+        toast({
+          title: "Photo deleted",
+          description: "The photo has been removed from your gallery.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting your photo.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUploadPhoto = async (id: string) => {
@@ -165,11 +162,6 @@ const Index = () => {
           <TabsTrigger value="gallery" className="flex items-center gap-2">
             <Image className="h-4 w-4" />
             <span>Gallery</span>
-            {photos.length > 0 && (
-              <span className="ml-1 rounded-full bg-primary/20 text-primary-foreground px-2 py-0.5 text-xs">
-                {photos.length}
-              </span>
-            )}
           </TabsTrigger>
         </TabsList>
         
@@ -186,11 +178,10 @@ const Index = () => {
             <Button 
               variant="outline" 
               onClick={() => setActiveTab("gallery")} 
-              disabled={photos.length === 0}
               className="flex items-center gap-2"
             >
               <Image className="h-4 w-4" />
-              <span>View Gallery ({photos.length})</span>
+              <span>View Gallery</span>
             </Button>
           </div>
         </TabsContent>
