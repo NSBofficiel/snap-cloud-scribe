@@ -31,7 +31,7 @@ export const userService = {
         return null;
       }
       
-      return data;
+      return data as UserProfile;
     } catch (error) {
       console.error('Error in getProfile:', error);
       return null;
@@ -52,7 +52,7 @@ export const userService = {
         return null;
       }
       
-      return data;
+      return data as UserProfile;
     } catch (error) {
       console.error('Error in updateProfile:', error);
       return null;
@@ -70,7 +70,7 @@ export const userService = {
         return [];
       }
       
-      return data || [];
+      return data as LoginHistoryRecord[] || [];
     } catch (error) {
       console.error('Error in getLoginHistory:', error);
       return [];

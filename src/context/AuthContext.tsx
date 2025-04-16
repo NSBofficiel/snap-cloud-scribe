@@ -66,15 +66,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userAgent = navigator.userAgent;
       
       // Use the RPC function to record login
-      const { error } = await supabase.rpc('record_login', {
+      await supabase.rpc('record_login', {
         user_agent_str: userAgent
       });
-      
-      if (error) {
-        console.error('Error recording login with RPC:', error);
-      }
     } catch (error) {
-      console.error('Error recording login:', error);
+      console.error('Error recording login with RPC:', error);
     }
   };
 
@@ -129,11 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (user) {
         // For regular users, sign out from Supabase
         // Use RPC function to record logout
-        const { error } = await supabase.rpc('record_logout');
-        
-        if (error) {
-          console.error('Error recording logout with RPC:', error);
-        }
+        await supabase.rpc('record_logout');
         
         // Sign out from Supabase
         await supabase.auth.signOut();
