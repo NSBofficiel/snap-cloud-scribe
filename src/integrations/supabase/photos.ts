@@ -15,7 +15,7 @@ export const photoService = {
     
     if (!userId) return null;
 
-    // Set default visibility based on user type
+    // Set default visibility based on user type - guest photos are public, user photos are private
     const defaultVisibility = isGuest ? 'public' : 'private';
     const visibility = photo.visibility || defaultVisibility;
 

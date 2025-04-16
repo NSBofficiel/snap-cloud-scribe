@@ -4,11 +4,13 @@ import { supabase } from "./client";
 export const userService = {
   async getProfile(userId: string) {
     try {
+      // Use custom query to avoid TypeScript errors
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+        .rpc('get_profile', { user_id: userId })
+        .catch(error => {
+          console.error('Error in RPC get_profile:', error);
+          return { data: null, error };
+        });
         
       if (error) {
         console.error('Error fetching profile:', error);
@@ -29,11 +31,14 @@ export const userService = {
       if (!user) return null;
       
       const { data, error } = await supabase
-        .from('profiles')
-        .update(profile)
-        .eq('id', user.id)
-        .select()
-        .single();
+        .rpc('update_profile', { 
+          profile_username: profile.username, 
+          profile_avatar_url: profile.avatar_url 
+        })
+        .catch(error => {
+          console.error('Error in RPC update_profile:', error);
+          return { data: null, error };
+        });
         
       if (error) {
         console.error('Error updating profile:', error);
@@ -53,12 +58,12 @@ export const userService = {
       
       if (!user) return [];
       
-      // Use custom query to avoid TypeScript errors
       const { data, error } = await supabase
-        .from('login_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('login_timestamp', { ascending: false });
+        .rpc('get_login_history')
+        .catch(error => {
+          console.error('Error in RPC get_login_history:', error);
+          return { data: [], error };
+        });
         
       if (error) {
         console.error('Error fetching login history:', error);
