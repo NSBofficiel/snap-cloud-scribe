@@ -1,6 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { typedRpc } from "@/integrations/supabase/rpc-types";
 
 interface AuthContextType {
   isAuthenticated: boolean;
