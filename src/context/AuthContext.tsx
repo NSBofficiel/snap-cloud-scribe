@@ -65,10 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Get user agent for the record
       const userAgent = navigator.userAgent;
       
-      // Use the RPC function to record login
+      // Use the RPC function to record login with proper type cast
       await supabase.rpc('record_login', {
         user_agent_str: userAgent
-      });
+      } as any);
     } catch (error) {
       console.error('Error recording login with RPC:', error);
     }
@@ -124,8 +124,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsGuest(false);
       } else if (user) {
         // For regular users, sign out from Supabase
-        // Use RPC function to record logout
-        await supabase.rpc('record_logout');
+        // Use RPC function to record logout with proper type cast
+        await supabase.rpc('record_logout' as any);
         
         // Sign out from Supabase
         await supabase.auth.signOut();

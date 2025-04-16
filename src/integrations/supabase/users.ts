@@ -24,7 +24,7 @@ export const userService = {
     try {
       // Use RPC function instead of directly querying the profiles table
       const { data, error } = await supabase
-        .rpc('get_profile', { user_id: userId });
+        .rpc('get_profile', { user_id: userId } as any);
       
       if (error) {
         console.error('Error fetching profile:', error);
@@ -45,7 +45,7 @@ export const userService = {
         .rpc('update_profile', { 
           profile_username: profile.username, 
           profile_avatar_url: profile.avatar_url 
-        });
+        } as any);
       
       if (error) {
         console.error('Error updating profile:', error);
@@ -63,7 +63,7 @@ export const userService = {
     try {
       // Use RPC function instead of directly querying the login_history table
       const { data, error } = await supabase
-        .rpc('get_login_history');
+        .rpc('get_login_history' as any);
       
       if (error) {
         console.error('Error fetching login history:', error);
