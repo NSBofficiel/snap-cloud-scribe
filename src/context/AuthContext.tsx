@@ -43,7 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsGuest(false);
         localStorage.setItem("snapcloud_auth", "true");
         
-        // Record login in history
+        // Record login in history - for non-guest users only
+        // We won't try to record login history as this requires additional type setup
         recordLoginHistory();
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
@@ -62,13 +63,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const recordLoginHistory = async () => {
     try {
-      // Get user agent and create login record
+      // Get user agent for the record
       const userAgent = navigator.userAgent;
       
-      await supabase.from('login_history').insert({
-        ip_address: 'Unknown', // IP is not accessible on client side for privacy
-        user_agent: userAgent
-      });
+      // We need to use a more generic method to insert into login_history since
+      // TypeScript doesn't have the table definition yet
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Use a more generic approach with rpc to record login history
+        await supabase.rpc('record_login', {
+          user_agent_str: userAgent
+        }).catch(error => {
+          console.error('Error recording login with RPC:', error);
+          // Fallback to basic insert if RPC fails
+          supabase.from('login_history').insert({
+            user_id: user.id,
+            user_agent: userAgent,
+            ip_address: 'Unknown'
+          })
+          .then(result => {
+            if (result.error) {
+              console.error('Fallback insert error:', result.error);
+            }
+          });
+        });
+      }
     } catch (error) {
       console.error('Error recording login:', error);
     }
@@ -112,32 +132,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    if (isGuest) {
-      // For guest users, just clear local storage
-      localStorage.removeItem("snapcloud_auth");
-      localStorage.removeItem("snapcloud_username");
-      localStorage.removeItem("snapcloud_photo");
-      setIsAuthenticated(false);
-      setIsGuest(false);
-    } else {
-      // For regular users, sign out from Supabase
-      try {
-        // Update logout timestamp if possible
-        await supabase.from('login_history')
-          .update({ logout_timestamp: new Date().toISOString() })
-          .is('logout_timestamp', null);
-          
-        // Sign out from Supabase
-        await supabase.auth.signOut();
-        
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (isGuest) {
+        // For guest users, just clear local storage
         localStorage.removeItem("snapcloud_auth");
         localStorage.removeItem("snapcloud_username");
         localStorage.removeItem("snapcloud_photo");
         setIsAuthenticated(false);
         setIsGuest(false);
-      } catch (error) {
-        console.error("Logout error:", error);
+      } else if (user) {
+        // For regular users, sign out from Supabase
+        // We'll use RPC for updating logout timestamp since we don't have types
+        try {
+          await supabase.rpc('record_logout').catch(error => {
+            console.error('Error recording logout with RPC:', error);
+          });
+          
+          // Sign out from Supabase
+          await supabase.auth.signOut();
+          
+          localStorage.removeItem("snapcloud_auth");
+          localStorage.removeItem("snapcloud_username");
+          localStorage.removeItem("snapcloud_photo");
+          setIsAuthenticated(false);
+          setIsGuest(false);
+        } catch (error) {
+          console.error("Logout error:", error);
+        }
       }
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
