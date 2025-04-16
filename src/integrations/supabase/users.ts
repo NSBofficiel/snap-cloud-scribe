@@ -1,17 +1,31 @@
 
 import { supabase } from "./client";
 
+// Interface for login history record
+interface LoginHistoryRecord {
+  id: string;
+  user_id: string;
+  login_timestamp: string;
+  logout_timestamp: string | null;
+  user_agent: string;
+  ip_address: string;
+}
+
+// Interface for user profile
+interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  updated_at: string;
+}
+
 export const userService = {
-  async getProfile(userId: string) {
+  async getProfile(userId: string): Promise<UserProfile | null> {
     try {
-      // Use custom query to avoid TypeScript errors
+      // Use RPC function instead of directly querying the profiles table
       const { data, error } = await supabase
-        .rpc('get_profile', { user_id: userId })
-        .catch(error => {
-          console.error('Error in RPC get_profile:', error);
-          return { data: null, error };
-        });
-        
+        .rpc('get_profile', { user_id: userId });
+      
       if (error) {
         console.error('Error fetching profile:', error);
         return null;
@@ -24,22 +38,15 @@ export const userService = {
     }
   },
   
-  async updateProfile(profile: { username?: string, avatar_url?: string }) {
+  async updateProfile(profile: { username?: string, avatar_url?: string }): Promise<UserProfile | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return null;
-      
+      // Use RPC function instead of directly updating the profiles table
       const { data, error } = await supabase
         .rpc('update_profile', { 
           profile_username: profile.username, 
           profile_avatar_url: profile.avatar_url 
-        })
-        .catch(error => {
-          console.error('Error in RPC update_profile:', error);
-          return { data: null, error };
         });
-        
+      
       if (error) {
         console.error('Error updating profile:', error);
         return null;
@@ -52,19 +59,12 @@ export const userService = {
     }
   },
   
-  async getLoginHistory() {
+  async getLoginHistory(): Promise<LoginHistoryRecord[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return [];
-      
+      // Use RPC function instead of directly querying the login_history table
       const { data, error } = await supabase
-        .rpc('get_login_history')
-        .catch(error => {
-          console.error('Error in RPC get_login_history:', error);
-          return { data: [], error };
-        });
-        
+        .rpc('get_login_history');
+      
       if (error) {
         console.error('Error fetching login history:', error);
         return [];
