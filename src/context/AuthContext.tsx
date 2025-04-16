@@ -1,6 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc } from "@/integrations/supabase/rpc-types";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -15,7 +15,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isGuest, setIsGuest] = useState<boolean>(false);
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkAuthStatus = async () => {
       const { data } = await supabase.auth.getSession();
@@ -27,7 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     checkAuthStatus();
     
-    // Listen for storage events to handle multi-tab scenarios
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "snapcloud_auth") {
         const authStatus = e.newValue;
@@ -36,14 +34,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
         setIsAuthenticated(true);
         setIsGuest(false);
         localStorage.setItem("snapcloud_auth", "true");
         
-        // Record login in history - for non-guest users only
         recordLoginHistory();
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
@@ -62,20 +58,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const recordLoginHistory = async () => {
     try {
-      // Get user agent for the record
       const userAgent = navigator.userAgent;
       
-      // Use the RPC function to record login with proper type cast
       await supabase.rpc('record_login', {
         user_agent_str: userAgent
-      } as any);
+      });
     } catch (error) {
       console.error('Error recording login with RPC:', error);
     }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Handle guest login case specifically
     if (email === "guest@example.com" && password === "guest") {
       localStorage.setItem("snapcloud_auth", "guest");
       localStorage.setItem("snapcloud_username", "Guest");
@@ -84,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     
-    // Regular login logic
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -98,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (data.user) {
         localStorage.setItem("snapcloud_auth", "true");
-        // Save username from email
         localStorage.setItem("snapcloud_username", email.split("@")[0]);
         setIsAuthenticated(true);
         setIsGuest(false);
@@ -116,18 +107,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { user } } = await supabase.auth.getUser();
       
       if (isGuest) {
-        // For guest users, just clear local storage
         localStorage.removeItem("snapcloud_auth");
         localStorage.removeItem("snapcloud_username");
         localStorage.removeItem("snapcloud_photo");
         setIsAuthenticated(false);
         setIsGuest(false);
       } else if (user) {
-        // For regular users, sign out from Supabase
-        // Use RPC function to record logout with proper type cast
-        await supabase.rpc('record_logout' as any);
-        
-        // Sign out from Supabase
+        await supabase.rpc('record_logout');
         await supabase.auth.signOut();
         
         localStorage.removeItem("snapcloud_auth");
